@@ -48,7 +48,7 @@ var dataarray=[];
       if(Aadhar_no == element.Aadhar_Number && email == element.Email ){
       res.status(409).json(
         {
-        "status": 409,
+        "success":false,
         "message": "User already registered"}
       );
   return true;
@@ -70,8 +70,8 @@ var dataarray=[];
       const  abc=new dbclass(name,Aadhar_no,City,username,realpassword,email);
   abc.insertdata();
   res.status(200).json({
-    "success":"User Registered Successfulyy",
-   "Data":"Data Saved To Mongodb successfullly"
+    "success":true,
+   "message":"user Registered Successfully"
   })}
     
 }
@@ -121,7 +121,7 @@ const isPasswordValid = await bcryptjs.compare(req.body.password, dataobject.pas
           //valid password and valid all information 
                      res.status(200).json(
         {
-        "status": 200,
+        "status": true,
         "message": "user Login Successfuly",
       "userdata": dataobject }
       );
@@ -133,7 +133,7 @@ const isPasswordValid = await bcryptjs.compare(req.body.password, dataobject.pas
              
               res.status(401).json(
         {
-        "status": 401,
+        "status": false,
         "message": "incorrect password Given " }
       );
 
@@ -148,7 +148,7 @@ const isPasswordValid = await bcryptjs.compare(req.body.password, dataobject.pas
         //user provided information is not correct and user access denied
         res.status(401).json({
           "message":"Invalid User Information! Access Denied ",
-          "status ": 401,
+          "status ": false,
         }) 
 
        return 
