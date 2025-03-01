@@ -1,176 +1,422 @@
 
 const database=require('../dbconnect/databaseconnect');
 const dbclass=require('../model/simpleformodel');
-const cloudinary=require('cloudinary');
-const fs = require('fs');
 const supabase = require('../firstserver');
 const { error, Console } = require('console');
-const {createClient} = require('@supabase/supabase-js');
-const imagekit=require('../imagekit');
 const bcryptjs=require('bcryptjs');
 const { hash } = require('crypto');
 
-
-
-
-
-
-
-
-
-
- const Register= async(req,res,next)=>{
+const citizenquerypost=(req,res,next)=>{
 
   try{
-  console.log("You are visisted to the register psge dear");
-  console.log(req.body);
-  
-
-  const name=req.body.Name;
-  const Aadhar_no=req.body.Aadhar_Number;
-  const City=req.body.City;
-  const username=req.body.username;
-  const password=req.body.password;
-  const email=req.body.email;
-var dataarray=[];
-  const obj1=new dbclass();
-  
-  obj1.fetchdata().then(async (homeobject)=>{
-  
-    if(homeobject.length !== null){
-     console.log("object came with some value ");
-     console.log(homeobject);
-     dataarray=homeobject;
-     console.log(Aadhar_no);
-     console.log(email);
-
-    const decision= dataarray.some(element => {
-      if(Aadhar_no == element.Aadhar_Number && email == element.Email ){
-      res.status(409).json(
-        {
-        "success":false,
-        "message": "User already registered"}
-      );
-  return true;
+    console.log("You are visisted to the citizenquerypost page  dear");
+    console.log(req.body);
     
-      }
-      });
-
-      if(decision === true){
-
-        ///user already loginned 
-        
-        return 
-      }
-      else{
-        const passwordhash=await bcryptjs.genSalt(10);
-        const realpassword=await bcryptjs.hash(req.body.password,passwordhash);
-
-
-      const  abc=new dbclass(name,Aadhar_no,City,username,realpassword,email);
-  abc.insertdata();
-  res.status(200).json({
-    "success":true,
-   "message":"user Registered Successfully"
-  })}
-    
-}
-    else{
-     console.log("Error in Fetching the data from the database");
-    }
-  });
-
-}catch(Error){
-  Console.log("Eror occured While Registration Processs")
-}
-
-
-
-
-
-}
-
-const login=(req,res,next)=>{
-
   
-  try{
-
-    const username=req.body.username;
-  const email=req.body.email; 
-
+    const querytitle=req.body.Title;
+    const query_des=req.body.Description;
+    const querycity=req.body.City;
+    const queryimage =req.body.Image;
+    const queryauth=req.body.Authority;
   var dataarray=[];
-  const obj1=new dbclass();
-
-  obj1.fetchdata().then(async (homeobject)=>{
+    const obj1=new dbclass.dbclass();
+    
+    obj1.fetchdata("Queries").then(async (homeobject)=>{
+    
+      if(homeobject.length !== null){
+       console.log("object came with some value ");
+       console.log(homeobject);
+       dataarray=homeobject;
+       console.log(querytitle);
+       console.log(queryimage);
   
-    if(homeobject.length !== null){
-     console.log("object came with some value ");
-     console.log(homeobject);
-     dataarray=homeobject;
-     console.log(email);
-
- const dataobject= dataarray.find(element => username === element.username && email === element.Email);
-
-      if(dataobject){
-        //valid email and username but checking password 
-
-        // Compare password
-const isPasswordValid = await bcryptjs.compare(req.body.password, dataobject.password);
-
-        if(isPasswordValid){
-          //valid password and valid all information 
-                     res.status(200).json(
-        {
-        "status": true,
-        "message": "user Login Successfuly",
-      "userdata": dataobject }
-      );
-
+      const decision= dataarray.some(element => {
+        if(queryimage == element.Image && querytitle == element.Title && query_des == element.Description ){
+        res.status(500).json(
+          {
+          "success":false,
+          "message": "Duplicate Query !"}
+        );
+    return true;
+      
+        }
+        });
+  
+        if(decision === true){
+  
+          ///Duplicate Query Inserting  
+          
+          return 
         }
         else{
 
-          //password is incorrect 
-             
-              res.status(401).json(
-        {
-        "status": false,
-        "message": "incorrect password Given " }
-      );
+       
+  
+        const  abc=new dbclass.dbclass(querytitle,query_des,querycity,queryimage,queryauth);
+   await  abc.insertdata("Queries");
+    //fecthing data after inserting the data 
+const getobject=new dbclass.dbclass();
+    var currentdataobject=[];
+          getobject.fetchdata("Queries").then((dataobject)=>{
+            currentdataobject=dataobject;
+            console.log("the query objet is as folloes "
+            );
+            console.log(currentdataobject);
+            res.status(200).json({
+              "success":true,
+             "message":"Query Inserted And Filled Successfully",
+             "queryobject":currentdataobject
+            })
+          
+          });
+          
+          
+   
+  
+  }
+      
+  }
+      else{
+       console.log("object came is null dear");
+      }
+    });
 
-        }
 
-    
-        
-        
+
+  }catch(Error){
+    console.log(Error);
+    console.log("error in posting the data to the query collection");
+  }
+
+
+
+
+}
+const citizenqueryget=(req,res,next)=>{
+  try{
+    var dataarray=[];
+    const obj1=new dbclass.dbclass();
+
+    obj1.fetchdata("Queries").then((dataobject)=>{
+
+      if(dataobject !== null){
+
+        dataarray=dataobject;
+        res.status(200).json({
+  "success":true,
+  "message":"Data Fecthed Successfully",
+  "dataobject":dataarray
+        });
+  
+
       }
       else{
+        res.status(500).json({
+          "sucess":false,
+          "message":"unable to fetch data"
+        })
 
-        //user provided information is not correct and user access denied
-        res.status(401).json({
-          "message":"Invalid User Information! Access Denied ",
-          "status ": false,
-        }) 
-
-       return 
       }
-    
-}
-    else{
-     console.log("Error in Fetching the data from the database");
-    }
-  });
+      
 
-}catch(Error){
-  console.log("Error occured While Login process");
-  console.log(Error);
-  res.send("<h1>Error occured while login process </h1>")
+
+    });
+
+
+  }
+  catch(Error){
+    console.log("Error occured while fetching the data from query object");
+    res.status(500).json({
+      "message":"error occured while fetching the data ! please try again"
+    });
+    console.log(Error);
+  }
 }
+
+
+const citizencomplaintpost=(req,res,next)=>{
+
+  try{
+    console.log("You are visisted to the citizencomplaintpost page  dear");
+    console.log(req.body);
+    
+  
+    const querytitle=req.body.Title;
+    const query_des=req.body.Description;
+    const querycity=req.body.City;
+    const queryimage =req.body.Image;
+    const queryauth=req.body.Authority;
+  var dataarray=[];
+    const obj1=new dbclass.dbclass();
+    
+    obj1.fetchdata("Complaints").then(async (homeobject)=>{
+    
+      if(homeobject.length !== null){
+       console.log("object came with some value ");
+       console.log(homeobject);
+       dataarray=homeobject;
+       console.log(querytitle);
+       console.log(queryimage);
+  
+      const decision= dataarray.some(element => {
+        if(queryimage == element.Image && querytitle == element.Title && query_des == element.Description ){
+        res.status(500).json(
+          {
+          "success":false,
+          "message": "Duplicate Query !"}
+        );
+    return true;
+      
+        }
+        });
+  
+        if(decision === true){
+  
+          ///Duplicate Query Inserting  
+          
+          return 
+        }
+        else{
+
+       
+  
+        const  abc=new dbclass.dbclass(querytitle,query_des,querycity,queryimage,queryauth);
+   await  abc.insertdata("Complaints");
+    //fecthing data after inserting the data 
+const getobject=new dbclass.dbclass();
+    var currentdataobject=[];
+          getobject.fetchdata("Complaints").then((dataobject)=>{
+            currentdataobject=dataobject;
+            console.log("the query objet is as folloes "
+            );
+            console.log(currentdataobject);
+            res.status(200).json({
+              "success":true,
+             "message":"Complaint Inserted And Filled Successfully",
+             "queryobject":currentdataobject
+            })
+          
+          });
+          
+          
+   
+  
+  }
+      
+  }
+      else{
+       console.log("object came is null dear");
+      }
+    });
+
+
+
+  }catch(Error){
+    console.log(Error);
+    console.log("error in posting the data to the complaint  collection");
+  }
+
+
+
+  
+
 }
+
+const citizencomplaintget=(req,res,next)=>{
+
+  try{
+    var dataarray=[];
+    const obj1=new dbclass.dbclass();
+
+    obj1.fetchdata("Complaints").then((dataobject)=>{
+
+      if(dataobject !== null){
+
+        dataarray=dataobject;
+        res.status(200).json({
+  "success":true,
+  "message":"Data Fecthed Successfully",
+  "dataobject":dataarray
+        });
+  
+
+      }
+      else{
+        res.status(500).json({
+          "sucess":false,
+          "message":"unable to fetch data"
+        })
+
+      }
+      
+
+
+    });
+
+
+  }
+  catch(Error){
+    console.log("Error occured while fetching the data from Complaint object");
+    res.status(500).json({
+      "message":"error occured while fetching the data ! please try again"
+    });
+    console.log(Error);
+  }
+}
+
+
+const citizenschemeget=(req,res,next)=>{
+  
+  try{
+    var dataarray=[];
+    const obj1=new dbclass.schemeclass();
+
+    obj1.fetchdata().then((dataobject)=>{
+
+      if(dataobject !== null){
+
+        dataarray=dataobject;
+        res.status(200).json({
+  "success":true,
+  "message":"Data Fecthed Successfully",
+  "dataobject":dataarray
+        });
+  
+
+      }
+      else{
+        res.status(500).json({
+          "sucess":false,
+          "message":"unable to fetch data"
+        })
+
+      }
+      
+
+
+    });
+
+
+  }
+  catch(Error){
+    console.log("Error occured while fetching the data from Complaint object");
+    res.status(500).json({
+      "message":"error occured while fetching the data ! please try again"
+    });
+    console.log(Error);
+  }
+
+}
+
+
+
+const citizenjobget=(req,res,next)=>{
+
+    
+  try{
+    var dataarray=[];
+    const obj1=new dbclass.Jobclass();
+
+    obj1.fetchdata().then((dataobject)=>{
+
+      if(dataobject !== null){
+
+        dataarray=dataobject;
+        res.status(200).json({
+  "success":true,
+  "message":"Data Fecthed Successfully",
+  "dataobject":dataarray
+        });
+  
+
+      }
+      else{
+        res.status(500).json({
+          "sucess":false,
+          "message":"unable to fetch data"
+        })
+
+      }
+      
+
+
+    });
+
+
+  }
+  catch(Error){
+    console.log("Error occured while fetching the data from Jobs object");
+    res.status(500).json({
+      "message":"error occured while fetching the data ! please try again"
+    });
+    console.log(Error);
+  }
+
+
+}
+
+const citizenNotice=(req,res,next)=>{
+
+  try{
+    var dataarray=[];
+    const obj1=new dbclass.Noticeclass();
+
+    obj1.fetchdata().then((dataobject)=>{
+
+      if(dataobject !== null){
+
+        dataarray=dataobject;
+        res.status(200).json({
+  "success":true,
+  "message":"Data Fecthed Successfully",
+  "dataobject":dataarray
+        });
+  
+
+      }
+      else{
+        res.status(500).json({
+          "sucess":false,
+          "message":"unable to fetch data"
+        })
+
+      }
+      
+
+
+    });
+
+
+  }
+  catch(Error){
+    console.log("Error occured while fetching the data from Notice object");
+    res.status(500).json({
+      "message":"error occured while fetching the data ! please try again"
+    });
+    console.log(Error);
+  }
+
+}
+
+
+
+
+
+
+
+
 
 
 
 module.exports={
-  Register,
-  login
+ citizenquerypost,
+ citizenqueryget,
+ citizencomplaintpost,
+ citizencomplaintget,
+ citizenschemeget,
+ citizenjobget,
+ citizenNotice
+
+
  
 }
